@@ -1,25 +1,28 @@
 import socket as sk
 
 
-cliente = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
+def main():
+    cliente = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
 
+    host = sk.gethostname()
+    port = 1234
 
-host = sk.gethostname()
-port = 1234
-
-cliente.connect((host, port))
-
-
-if __name__ == "__main__":
     try:
+        cliente.connect((host, port))
         while True:
-            msj = input("¿Qué mensaje quieres enviar? (escribe 'salir' para terminar): ")
-            if msj.lower() == 'salir':  # Verificar si el usuario quiere salir
+            msj = input(
+                "¿Qué mensaje quieres enviar? (escribe 'salir' para terminar): ")
+            if msj.lower() == 'salir':
                 break
             print(msj)
             cliente.send(msj.encode())
     finally:
-        cliente.close()  # Asegurar que el socket se cierre correctamente
+        print("Socket del cliente cerrado")
+        cliente.close()
+
+
+if __name__ == "__main__":
+    main()
 
 
 """

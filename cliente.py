@@ -1,4 +1,38 @@
+
 import socket as sk
+import threading
+
+
+def enviar_mensajes(sock):
+    print("Conectado al servidor. Puedes enviar mensajes.")
+    print("Usa '@nombre_destinatario mensaje' para enviar un mensaje privado.")
+    print("Escribe solo el mensaje para enviarlo a todos.")
+    while True:
+        mensaje = input("")
+        if mensaje.lower() == 'salir':
+            break
+        try:
+            sock.send(mensaje.encode('utf-8'))
+        except Exception as e:
+            print(f"Error al enviar mensaje: {e}")
+            break
+
+
+def recibir_mensajes(sock):
+    while True:
+        try:
+            mensaje = sock.recv(1024).decode('utf-8')
+            if mensaje:
+                print("\nMensaje recibido:", mensaje)
+            else:
+                # El servidor cerró la conexión
+                print("\nSe ha perdido la conexión con el servidor.")
+                sock.close()
+                break
+        except Exception as e:
+            print(f"\nError al recibir mensajes: {e}")
+            sock.close()
+            break
 
 
 def main():
@@ -9,13 +43,21 @@ def main():
 
     try:
         cliente.connect((host, port))
-        while True:
-            msj = input(
-                "¿Qué mensaje quieres enviar? (escribe 'salir' para terminar): ")
-            if msj.lower() == 'salir':
-                break
-            print(msj)
-            cliente.send(msj.encode())
+        print("Conectado al servidor. Puedes comenzar a enviar mensajes.")
+
+        thread_recepcion = threading.Thread(
+            target=recibir_mensajes, args=(cliente,))
+        thread_envio = threading.Thread(
+            target=enviar_mensajes, args=(cliente,))
+
+        thread_recepcion.start()
+        thread_envio.start()
+
+        thread_envio.join()
+
+        print("Conexión con el servidor cerrada.")
+    except Exception as e:
+        print(f"No se pudo conectar al servidor: {e}")
     finally:
         print("Socket del cliente cerrado")
         cliente.close()
@@ -23,19 +65,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-"""
- _________________________________________
-/ Ya mejor no programes Hijo              /
- -----------------------------------------
-   \
-    \
-        .--.
-       |o_o |
-       |:_/ |
-      //   \ \
-     (|     | )
-    /'\_   _/`\
-    \___)=(___/
-"""

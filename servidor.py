@@ -4,7 +4,6 @@ import threading
 
 # Diccionario para almacenar las conexiones de los clientes
 client_connections = {}
-client_addresses = {}
 
 
 def client_thread(conn, addr):
@@ -17,11 +16,10 @@ def client_thread(conn, addr):
         while True:
             data = conn.recv(1024)
             if not data:
-                break  # Terminar bucle si no hay datos
+                break  
             message = data.decode('utf-8')
             if message.startswith('@'):
                 target_id, _, message_content = message[1:].partition(' ')
-                # Enviar mensaje a un destinatario específico
                 if target_id in client_connections:
                     client_connections[target_id].send(
                         f"Mensaje privado de {client_id}: {message_content}".encode('utf-8'))
@@ -29,7 +27,6 @@ def client_thread(conn, addr):
                     conn.send(
                         f"Destinatario {target_id} no encontrado.".encode('utf-8'))
             else:
-                # Enviar mensaje a todos menos al emisor
                 for client, connection in client_connections.items():
                     if client != client_id:
                         connection.send(

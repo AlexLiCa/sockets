@@ -45,12 +45,12 @@ def main():
         cliente.connect((host, port))
         print("Conectado al servidor. Puedes comenzar a enviar mensajes.")
 
-        thread_recepcion = threading.Thread(
+        thread_recivir = threading.Thread(
             target=recibir_mensajes, args=(cliente,))
         thread_envio = threading.Thread(
             target=enviar_mensajes, args=(cliente,))
 
-        thread_recepcion.start()
+        thread_recivir.start()
         thread_envio.start()
 
         thread_envio.join()

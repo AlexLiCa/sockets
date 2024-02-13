@@ -20,7 +20,7 @@ def client_thread(conn, addr):
             message = data.decode('utf-8')
             if message.startswith('@'):
                 target_id, _, message_content = message[1:].partition(' ')
-                if target_id in client_connections:
+                if target_id in client_connections and target_id != client_id:
                     client_connections[target_id].send(
                         f"Mensaje privado de {client_id}: {message_content}".encode('utf-8'))
                 else:

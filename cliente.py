@@ -45,6 +45,8 @@ def main():
     try:
         cliente.connect((host, port))
         print("Conectado al servidor. Puedes comenzar a enviar mensajes.")
+        mensaje = "/usuarios"
+        cliente.send(mensaje.encode('utf-8'))
 
         thread_recivir = threading.Thread(
             target=recibir_mensajes, args=(cliente,))

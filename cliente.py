@@ -6,6 +6,7 @@ import threading
 def enviar_mensajes(sock):
     print("Conectado al servidor. Puedes enviar mensajes.")
     print("Usa '@nombre_destinatario mensaje' para enviar un mensaje privado.")
+    print("Usa '/usuarios' para ver todos los usuarios en el server.")
     print("Escribe solo el mensaje para enviarlo a todos.")
     while True:
         mensaje = input("")

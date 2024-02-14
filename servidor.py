@@ -16,16 +16,23 @@ def client_thread(conn, addr):
         while True:
             data = conn.recv(1024)
             if not data:
-                break  
+                break
             message = data.decode('utf-8')
             if message.startswith('@'):
                 target_id, _, message_content = message[1:].partition(' ')
                 if target_id in client_connections and target_id != client_id:
                     client_connections[target_id].send(
                         f"Mensaje privado de {client_id}: {message_content}".encode('utf-8'))
+                elif target_id == client_id:
+                    conn.send(
+                        f"Destinatario {target_id} es usted.".encode('utf-8'))
                 else:
                     conn.send(
                         f"Destinatario {target_id} no encontrado.".encode('utf-8'))
+            elif message.strip() == "/usuarios":
+                usuarios = "\n".join(client_connections.keys())
+                conn.send(
+                    f"Usuarios conectados:\n{usuarios}".encode('utf-8'))
             else:
                 for client, connection in client_connections.items():
                     if client != client_id:

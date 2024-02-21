@@ -39,11 +39,13 @@ def recibir_mensajes(sock):
 def main():
     cliente = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
 
-    host = sk.gethostname()
+    host = "172.18.16.3"
     port = 1234
 
     try:
         cliente.connect((host, port))
+        alias = input("Ingresa tu alias: ")
+        cliente.send(alias.encode('utf-8'))
         print("Conectado al servidor. Puedes comenzar a enviar mensajes.")
         mensaje = "/usuarios"
         cliente.send(mensaje.encode('utf-8'))

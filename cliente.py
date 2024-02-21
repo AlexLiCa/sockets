@@ -7,7 +7,12 @@ def enviar_mensajes(sock):
     print("Conectado al servidor. Puedes enviar mensajes.")
     print("Usa '@nombre_destinatario mensaje' para enviar un mensaje privado.")
     print("Usa '/usuarios' para ver todos los usuarios en el server.")
-    print("Escribe solo el mensaje para enviarlo a todos.")
+    print("Usa '/agregar_amigo' para agregar a alguien a la lista de amigos.")
+    print("Usa '/eliminar_amigo' para eliminar a alguien a la lista de amigos.")
+    print("Usa '@amigos' y un mensaje para enviar un menaje a todos tus amigos.")
+    print("Usa '/ver_amigos' para ver el estado de tus amigos.")
+    print("Usa '/historial' para ver tu historial de mensajes.")
+    print("Escribe solo el mensaje para enviarlo a todos los usuarios conectado.")
     while True:
         mensaje = input("")
         if mensaje.lower() == 'salir':

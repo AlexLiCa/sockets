@@ -4,6 +4,8 @@ import threading
 
 client_info = {}
 
+clients_friends = {}
+
 message_history = {}
 
 
@@ -50,13 +52,29 @@ def client_thread(conn, alias):
             if not data:
                 break
             message = data.decode('utf-8')
-            if message.startswith('@'):
+            if message.startswith("@amigos"):
+                _, _, friend_message = message.partition(' ')  
+                amigos_conectados = 0
+                for friend_alias in client_data["friends"]:
+                    if friend_alias in client_info:  
+                        client_info[friend_alias]["conn"].send(
+                            f"Mensaje de {alias} (Amigo): {friend_message}".encode('utf-8'))
+                        historial_de_mensajes(alias, friend_alias, message)                    
+                        amigos_conectados += 1
+                if amigos_conectados == 0: 
+                    conn.send(
+                        "Ninguno de tus amigos está en línea.".encode('utf-8'))
+            elif message.startswith('@'):
                 target_alias, _, message_content = message[1:].partition(' ')
                 if target_alias in client_info and target_alias != alias:
                     # Accede a la conexión de socket del destinatario a través de 'conn'
-                    client_info[target_alias]["conn"].send(
-                        f"Mensaje privado de {alias}: {message_content}".encode('utf-8'))
-                    historial_de_mensajes(alias, target_alias, message)                    
+                    if target_alias in client_info[alias]["friends"]:
+                        client_info[target_alias]["conn"].send(
+                            f"Mensaje privado de {alias}: {message_content}".encode('utf-8'))
+                        historial_de_mensajes(alias, target_alias, message) 
+                    else:
+                        conn.send(
+                            f"Destinatario {target_alias} no esta en su lista de amigos.".encode('utf-8'))
                 elif target_alias == alias:
                     conn.send(
                         f"Destinatario {target_alias} es usted.".encode('utf-8'))
@@ -73,10 +91,19 @@ def client_thread(conn, alias):
             elif message.startswith("/agregar_amigo "):
                 # Lógica para agregar amigo
                 friend_ip = message.split(" ", 1)[1]
-                if friend_ip not in client_data["friends"]:
+                if friend_ip not in client_data["friends"] and friend_ip != alias:
                     client_data["friends"].append(friend_ip)
                     conn.send(
                         f"{friend_ip} añadido como amigo.".encode('utf-8'))
+                    if alias not in clients_friends:
+                        clients_friends[alias] = [friend_ip]
+                    else:
+                        clients_friends[alias].append(friend_ip)
+                    print(f"Amigos de Clientes:\n{clients_friends}")
+                    
+                elif friend_ip == alias:
+                    conn.send(
+                        f"{friend_ip} es usted.".encode('utf-8'))
                 else:
                     conn.send(f"{friend_ip} ya es tu amigo.".encode('utf-8'))
             elif message.startswith("/eliminar_amigo "):
@@ -84,26 +111,16 @@ def client_thread(conn, alias):
                 friend_ip = message.split(" ", 1)[1]
                 if friend_ip in client_data["friends"]:
                     client_data["friends"].remove(friend_ip)
+                    clients_friends[alias].remove(friend_ip)
                     conn.send(
                         f"{friend_ip} eliminado de tus amigos.".encode('utf-8'))
                 else:
                     conn.send(
                         f"{friend_ip} no está en tu lista de amigos.".encode('utf-8'))
-            elif message.startswith("/amigos"):
-                _, _, friend_message = message.partition(' ')  
-                amigos_conectados = 0
-                for friend_alias in client_data["friends"]:
-                    if friend_alias in client_info:  
-                        client_info[friend_alias]["conn"].send(
-                            f"Mensaje de {alias} (Amigo): {friend_message}".encode('utf-8'))
-                        historial_de_mensajes(alias, friend_alias, message)                    
-                        amigos_conectados += 1
-                if amigos_conectados == 0: 
-                    conn.send(
-                        "Ninguno de tus amigos está en línea.".encode('utf-8'))
+            
             elif message == "/ver_amigos":
                 friends_status = "\n".join(
-                    [f"{friend_ip} {'en línea' if friend_ip in client_info else 'fuera de línea'}" for friend_ip in client_data["friends"]])
+                    [f"{friend_ip} {'en línea' if friend_ip in client_info else 'desconectado'}" for friend_ip in client_data["friends"]])
                 conn.send(
                     f"Estado de amigos:\n{friends_status}".encode('utf-8'))
             elif message == "/historial":
@@ -143,12 +160,12 @@ def main():
             alias = conn.recv(1024).decode('utf-8')
             if alias not in client_info:
                 # Inicializa un nuevo registro para el alias si no existe previamente
-                client_info[alias] = {"conn": conn, "friends": []}
-            else:
-                # Actualiza la conexión en caso de reconexión, mantener amigos existentes
-                client_info[alias]["conn"] = conn
-                client_info[alias] = conn
-                # Iniciar un nuevo hilo para manejar la conexión
+                if alias not in clients_friends:
+                    client_info[alias] = {"conn": conn, "friends": []}
+                else:
+                    client_info[alias] = {"conn": conn,
+                                          "friends": clients_friends[alias]}
+
             threading.Thread(target=client_thread, args=(conn, alias)).start()
     finally:
         server.close()

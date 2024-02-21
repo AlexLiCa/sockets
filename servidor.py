@@ -2,8 +2,23 @@
 import socket as sk
 import threading
 
-# Diccionario para almacenar las conexiones de los clientes
 client_info = {}
+
+message_history = {}
+
+
+def historial_de_mensajes(remitente, destinatario, mensaje):
+    if remitente not in message_history:
+        message_history[remitente] = []
+    if destinatario not in message_history:
+        message_history[destinatario] = []
+
+    message_history[remitente].append(
+        {"type": "sent", "message": mensaje, "to": destinatario})
+
+    message_history[destinatario].append(
+        {"type": "received", "message": mensaje, "from": remitente})
+
 
 
 def broadcast_message(sender_alias, message):
@@ -19,6 +34,7 @@ def broadcast_message(sender_alias, message):
                 # Obtiene la conexión de socket del destinatario
                 conn = info["conn"]
                 conn.send(f"{sender_alias}: {message}".encode('utf-8'))
+                historial_de_mensajes(sender_alias, alias, message)
             except Exception as e:
                 print(f"Error al enviar mensaje a {alias}: {e}")
 
@@ -40,6 +56,7 @@ def client_thread(conn, alias):
                     # Accede a la conexión de socket del destinatario a través de 'conn'
                     client_info[target_alias]["conn"].send(
                         f"Mensaje privado de {alias}: {message_content}".encode('utf-8'))
+                    historial_de_mensajes(alias, target_alias, message)                    
                 elif target_alias == alias:
                     conn.send(
                         f"Destinatario {target_alias} es usted.".encode('utf-8'))
@@ -79,16 +96,26 @@ def client_thread(conn, alias):
                     if friend_alias in client_info:  
                         client_info[friend_alias]["conn"].send(
                             f"Mensaje de {alias} (Amigo): {friend_message}".encode('utf-8'))
+                        historial_de_mensajes(alias, friend_alias, message)                    
                         amigos_conectados += 1
                 if amigos_conectados == 0: 
                     conn.send(
                         "Ninguno de tus amigos está en línea.".encode('utf-8'))
             elif message == "/ver_amigos":
-                # Lógica para ver el estado de los amigos
                 friends_status = "\n".join(
                     [f"{friend_ip} {'en línea' if friend_ip in client_info else 'fuera de línea'}" for friend_ip in client_data["friends"]])
                 conn.send(
                     f"Estado de amigos:\n{friends_status}".encode('utf-8'))
+            elif message == "/historial":
+                if alias in message_history:
+                    historial = message_history[alias]
+                    historial_formateado = '\n'.join(
+                        [f"{m['type']}: {m.get('from', '')}{m.get('to', '')}: {m['message']}" for m in historial])
+                    conn.send(
+                        f"Tu historial de mensajes:\n{historial_formateado}".encode('utf-8'))
+                else:
+                    conn.send(
+                        "No tienes historial de mensajes.".encode('utf-8'))
             else:
                 broadcast_message(alias, message)
     finally:

@@ -1,6 +1,7 @@
 
 import socket as sk
 import threading
+from prueba import mi_ip
 
 client_info = {}
 
@@ -144,7 +145,7 @@ def client_thread(conn, alias):
 def main():
     server = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
     port = 1234
-    host = "172.18.16.3"
+    host = mi_ip
     try:
         server.bind((host, port))
     except sk.error as e:
@@ -159,14 +160,18 @@ def main():
             conn, addr = server.accept()
             alias = conn.recv(1024).decode('utf-8')
             if alias not in client_info:
-                # Inicializa un nuevo registro para el alias si no existe previamente
+                conn.send(f"true".encode('utf-8'))       
                 if alias not in clients_friends:
                     client_info[alias] = {"conn": conn, "friends": []}
                 else:
                     client_info[alias] = {"conn": conn,
                                           "friends": clients_friends[alias]}
+                
 
-            threading.Thread(target=client_thread, args=(conn, alias)).start()
+                threading.Thread(target=client_thread, args=(conn, alias)).start()
+            else:
+                conn.send(
+                    f"false".encode('utf-8'))
     finally:
         server.close()
 

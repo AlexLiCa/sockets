@@ -1,6 +1,7 @@
 
 import socket as sk
 import threading
+from prueba import mi_ip
 
 
 def enviar_mensajes(sock):
@@ -44,28 +45,37 @@ def recibir_mensajes(sock):
 def main():
     cliente = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
 
-    host = "172.18.16.3"
+    host = mi_ip
     port = 1234
-
+    
     try:
         cliente.connect((host, port))
+        #Enviamos el alias al servidor 
         alias = input("Ingresa tu alias: ")
         cliente.send(alias.encode('utf-8'))
-        print("Conectado al servidor. Puedes comenzar a enviar mensajes.")
-        mensaje = "/usuarios"
-        cliente.send(mensaje.encode('utf-8'))
 
-        thread_recivir = threading.Thread(
-            target=recibir_mensajes, args=(cliente,))
-        thread_envio = threading.Thread(
-            target=enviar_mensajes, args=(cliente,))
+        alias = cliente.recv(1024).decode('utf-8')
 
-        thread_recivir.start()
-        thread_envio.start()
+        if alias == "true":
+            print("Conectado al servidor. Puedes comenzar a enviar mensajes.")
+            mensaje = "/usuarios"
+            cliente.send(mensaje.encode('utf-8'))
 
-        thread_envio.join()
+            thread_recivir = threading.Thread(
+                target=recibir_mensajes, args=(cliente,))
+            thread_envio = threading.Thread(
+                target=enviar_mensajes, args=(cliente,))
 
-        print("Conexión con el servidor cerrada.")
+            thread_recivir.start()
+            thread_envio.start()
+
+            thread_envio.join()
+
+            print("Conexión con el servidor cerrada.")
+        else: 
+            print("Alias ya esta en uso")
+
+
     except Exception as e:
         print(f"No se pudo conectar al servidor: {e}")
     finally:

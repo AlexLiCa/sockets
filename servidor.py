@@ -1,6 +1,7 @@
 
 import socket as sk
 import threading
+from pprint import pprint
 from prueba import mi_ip
 
 client_info = {}
@@ -68,7 +69,6 @@ def client_thread(conn, alias):
             elif message.startswith('@'):
                 target_alias, _, message_content = message[1:].partition(' ')
                 if target_alias in client_info and target_alias != alias:
-                    # Accede a la conexión de socket del destinatario a través de 'conn'
                     if target_alias in client_info[alias]["friends"]:
                         client_info[target_alias]["conn"].send(
                             f"Mensaje privado de {alias}: {message_content}".encode('utf-8'))
@@ -94,13 +94,15 @@ def client_thread(conn, alias):
                 friend_ip = message.split(" ", 1)[1]
                 if friend_ip not in client_data["friends"] and friend_ip != alias:
                     client_data["friends"].append(friend_ip)
-                    conn.send(
-                        f"{friend_ip} añadido como amigo.".encode('utf-8'))
+
                     if alias not in clients_friends:
                         clients_friends[alias] = [friend_ip]
-                    else:
+                    else:  
                         clients_friends[alias].append(friend_ip)
+                    conn.send(
+                        f"{friend_ip} añadido como amigo.".encode('utf-8'))
                     print(f"Amigos de Clientes:\n{clients_friends}")
+
                     
                 elif friend_ip == alias:
                     conn.send(
